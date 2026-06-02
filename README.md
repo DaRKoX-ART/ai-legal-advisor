@@ -1,165 +1,258 @@
-# יועץ משפטי AI — AI Legal Advisor
+# FOLIO — AI Legal Advisor
 
-A premium Hebrew RTL mobile app prototype built with **Expo / React Native**, designed to simulate an AI-powered legal advisory system. Built as a university project demonstrating multi-agent AI architecture, modern mobile UI/UX, and Hebrew-first design.
+<p align="center">
+  <b>Hebrew-first, mobile-native legal intelligence</b><br>
+  <sub>Built with Expo · React Native · Supabase · OpenRouter AI</sub>
+</p>
 
-> ⚠️ **Prototype Notice:** This app uses simulated AI responses. No real AI backend or legal database is connected. All legal information shown is fictional and for demonstration purposes only.
-
----
-
-## Screenshots
-
-| Login | Home | Ask | History | About |
-|-------|------|-----|---------|-------|
-| Premium login with animated card | Category selection | Question input + AI result | Past queries | App info & agents |
-
----
-
-## Features
-
-- 🔐 **Fake authentication** — username/password stored in `AsyncStorage` (no real backend)
-- 🏠 **Home screen** — 5 legal category cards with icon badges
-- 🤖 **Ask screen** — type a question, choose a category, get a simulated AI answer
-- 📜 **History screen** — all past questions stored locally with date and category badge
-- ℹ️ **About screen** — explains the multi-agent AI architecture and the 5 specialist bots
-- 🌙 **Premium black & white theme** — fintech/legal-tech aesthetic with deep shadows, glass-effect card, and animated transitions
-- 🔤 **Hebrew RTL throughout** — all text, layout, and navigation is right-to-left
+<p align="center">
+  <a href="#key-features">Features</a> ·
+  <a href="#tech-stack">Stack</a> ·
+  <a href="#local-development-setup">Setup</a> ·
+  <a href="#environment-variables">Env</a> ·
+  <a href="#database-migrations">DB</a> ·
+  <a href="#roadmap">Roadmap</a>
+</p>
 
 ---
 
-## Screens
+## Project Overview
 
-| Screen | Path | Description |
-|--------|------|-------------|
-| **Login** | `/login` | Animated login card with segmented tab (login / register), focus-aware inputs, shake-on-error, spring button animation |
-| **Home** | `/(tabs)/home` | Greeting header with user avatar, 5 legal category cards, "How it works" section |
-| **Ask** | `/(tabs)/ask` | 2×2 category grid, free-text question input, simulated 2s AI processing, multi-section result (explanation + next steps + disclaimer) |
-| **History** | `/(tabs)/history` | FlatList of past questions with date, category badge, and answer preview — with clear-all action |
-| **About** | `/(tabs)/about` | App identity card, 2×2 "how it works" grid, specialist bots list, legal disclaimer, logout |
+**FOLIO** is an AI-powered legal advisory platform designed for Hebrew-speaking users. It combines a cinematic, premium mobile experience with real-time AI legal question answering, secure cloud-backed accounts, and an admin reporting layer — all built on a modern React Native / Expo foundation.
+
+The platform supports both **guest exploration** and **authenticated accounts** with persistent cloud history, analytics, and cross-device sync via Supabase.
+
+> ⚠️ **FOLIO is an academic demonstration and research prototype.** It is **not** a substitute for advice from a licensed attorney. All AI-generated responses are informational only and should be verified with a qualified legal professional before any action is taken.
 
 ---
 
-## Simulated AI Architecture
+## Key Features
 
-The app simulates a **multi-agent AI system** where each legal domain has a specialist bot:
-
-| Bot | Domain |
-|-----|--------|
-| בוט פלילי | Criminal law — charges, rights, defense |
-| בוט משפחה | Family law — divorce, custody, relations |
-| בוט חוזים | Contract law — agreements, disputes |
-| בוט עבודה | Labor law — employee rights, termination |
-| בוט כללי | General legal questions |
-
-A central AI model aggregates their outputs into a structured response (simulated with hardcoded responses per category).
+| Feature | Description |
+|---------|-------------|
+| **AI Legal Q&A** | Natural-language questions across 5 domains — Criminal, Family, Contract, Labor, and General law. Answers are streamed from OpenRouter (GPT-OSS / Gemini) with structured explanations, next steps, and disclaimers. |
+| **Guest Mode** | Users can explore the app and receive AI answers without creating an account. Local history persists on-device. |
+| **Authenticated Accounts** | Full Supabase Auth (email/password) with JWT sessions, password reset, and profile management. |
+| **Cloud Sync** | Authenticated users get cross-device history sync, persistent profiles, and secure data storage in Supabase PostgreSQL. |
+| **Analytics Tracking** | Privacy-respecting event tracking for product insights — login flows, question categories, feature usage, and error rates. |
+| **Admin Dashboard** | Protected `/admin` routes with user management and legal request reporting for operational oversight. |
+| **Hebrew RTL-First UX** | 100 % right-to-left layout, Hebrew-optimized typography (Heebo / Assistant), and native RTL navigation. |
+| **NOCTURNE Design System** | Premium dark-mode aesthetic — near-black surfaces, glassmorphism cards, cinematic gradients, and tactile haptic feedback. |
+| **Responsive Simulations** | Graceful offline degradation with clearly labeled demo answers when AI services are unavailable. |
 
 ---
 
 ## Tech Stack
 
-| Technology | Role |
-|-----------|------|
-| [Expo SDK 54](https://expo.dev) | App framework |
-| [Expo Router v6](https://expo.github.io/router) | File-based navigation |
-| [React Native](https://reactnative.dev) | UI rendering |
-| [AsyncStorage](https://react-native-async-storage.github.io/async-storage/) | Local data persistence |
-| [expo-linear-gradient](https://docs.expo.dev/versions/latest/sdk/linear-gradient/) | Gradient backgrounds and buttons |
-| [expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/) | Tactile feedback on mobile |
-| [@expo/vector-icons (Feather)](https://icons.expo.fyi) | Icon set |
-| [Google Fonts — Heebo / Assistant](https://fonts.google.com) | Hebrew-optimized typography |
-| TypeScript | Type safety throughout |
+| Layer | Technology |
+|-------|------------|
+| **Mobile Framework** | Expo SDK 54 + React Native 0.81 |
+| **Navigation** | Expo Router v6 (file-based) |
+| **Language** | TypeScript 5.9 |
+| **Backend & Auth** | Supabase (PostgreSQL + Auth + Realtime) |
+| **AI Orchestration** | OpenRouter API / Google Gemini via Node server |
+| **State & Sync** | TanStack Query, AsyncStorage (local), Supabase (cloud) |
+| **UI & Motion** | React Native Reanimated, Expo Linear Gradient, Expo Blur, Expo Haptics |
+| **Validation** | Zod |
 
 ---
 
-## Project Structure
+## Architecture
 
 ```
-artifacts/ai-legal-advisor/
-├── app/
-│   ├── +html.tsx           # Web HTML template (RTL, Google Fonts)
-│   ├── _layout.tsx         # Root layout with safe area + auth guard
-│   ├── index.tsx           # Entry redirect (checks AsyncStorage auth)
-│   ├── login.tsx           # Login / Register screen
-│   └── (tabs)/
-│       ├── _layout.tsx     # Bottom tab bar configuration
-│       ├── home.tsx        # Home — category cards
-│       ├── ask.tsx         # Ask — question input + AI result
-│       ├── history.tsx     # History — past questions
-│       └── about.tsx       # About — app info & logout
-├── context/
-│   └── AppContext.tsx      # Auth, history, categories, AI responses
-├── hooks/
-│   └── useColors.ts        # Theme color hook
-├── assets/
-│   └── images/             # App icons and splash
-├── app.json                # Expo configuration
-├── babel.config.js
-├── tsconfig.json
-└── package.json
+┌─────────────────────────────────────────────────────────────┐
+│                      Client (Expo)                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐  │
+│  │  Auth    │  │  Ask AI  │  │  History │  │   Admin    │  │
+│  │  Screens │  │  Screen  │  │  + Saved │  │  Dashboard │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └─────┬──────┘  │
+│       │             │             │               │          │
+│  ┌────▼─────────────▼─────────────▼───────────────▼──────┐  │
+│  │              Context Layer (Auth / App / Intake)       │  │
+│  └────┬─────────────────────────────┬────────────────────┘  │
+│       │                             │                       │
+│  ┌────▼──────┐               ┌──────▼──────┐               │
+│  │ AsyncStorage│ (guest)     │  Supabase   │ (auth)        │
+│  └───────────┘               │  Client SDK │               │
+│                              └──────┬──────┘               │
+└─────────────────────────────────────┼───────────────────────┘
+                                      │
+                        ┌─────────────▼─────────────┐
+                        │      Supabase Cloud       │
+                        │  (Auth · Postgres · Edge) │
+                        └─────────────┬─────────────┘
+                                      │
+┌─────────────────────────────────────▼───────────────────────┐
+│                    Node AI Server (local / cloud)           │
+│              ┌─────────────────────────────────┐            │
+│              │  OpenRouter  ·  Gemini  ·  Demo  │            │
+│              └─────────────────────────────────┘            │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+- **Guest users** interact entirely on-device via AsyncStorage.
+- **Authenticated users** sync profiles, history, and analytics events to Supabase.
+- **AI requests** are proxied through a lightweight Node server to keep API keys server-side.
+- **Admin routes** are gated behind role checks and protected layouts.
 
 ---
 
-## Getting Started
+## Authentication & Supabase
+
+FOLIO uses **Supabase Auth** for production-grade identity management:
+
+- **Email / password** sign-up and sign-in with secure hashing.
+- **JWT session** restoration on app launch.
+- **Password reset** via secure email flow.
+- **Graceful degradation** — if Supabase is not configured, the app falls back to guest mode without crashing.
+
+### Guest vs. Authenticated
+
+| Capability | Guest | Authenticated |
+|------------|-------|---------------|
+| Ask AI questions | ✅ | ✅ |
+| View history | ✅ (local) | ✅ (cloud + local) |
+| Cross-device sync | ❌ | ✅ |
+| Profile & saved items | ❌ | ✅ |
+| Admin access | ❌ | ✅ (role-based) |
+
+---
+
+## Admin Dashboard / Reports
+
+The `/admin` namespace provides operational visibility:
+
+- **Users Report** — view registered users, onboarding status, and activity metrics.
+- **Legal Requests Report** — audit questions asked, categories used, and AI response outcomes.
+- **Protected Access** — admin routes are isolated in `app/admin/` with layout-level guards.
+
+> Admin features are intended for platform operators and researchers evaluating usage patterns in controlled demo environments.
+
+---
+
+## Local Development Setup
 
 ### Prerequisites
+
 - Node.js 18+
 - pnpm (`npm install -g pnpm`)
-- Expo CLI (`pnpm install -g expo-cli`)
+- Expo CLI (`pnpm install -g @expo/cli`)
+- A Supabase project (free tier is sufficient)
+- An OpenRouter or Google AI Studio API key
 
 ### Installation
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/YOUR_USERNAME/ai-legal-advisor.git
-cd ai-legal-advisor/artifacts/ai-legal-advisor
+cd ai-legal-advisor
 
-# Install dependencies
+# 2. Install dependencies
 pnpm install
 
-# Start the development server
+# 3. Configure environment variables
+cp .env.example .env
+# Edit .env with your Supabase and AI provider credentials
+
+# 4. Start the Expo development server
 pnpm run dev
 ```
 
-Then open in:
-- **Web:** `http://localhost:PORT` in your browser
-- **iOS/Android:** Scan the QR code with the Expo Go app
+Then open the app:
+- **Web:** visit the localhost URL printed in your terminal
+- **iOS / Android:** scan the QR code with the **Expo Go** app
 
-### Login (Demo)
-Enter **any username** and a **password of 4+ characters** — no real credentials needed.
+### Running the AI Server
 
----
+```bash
+# In a separate terminal
+pnpm run serve
+```
 
-## Design System
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `#020202` | Near-black | App background |
-| `#111111` | Dark surface | Header, card backs |
-| `#1C1C1C` | Mid surface | Chips, secondary elements |
-| `#FFFFFF` | White | Cards, buttons text |
-| `#F7F7F7` | Off-white | Input backgrounds |
-| `#AAAAAA` | Muted gray | Secondary text |
-
-Typography uses **Heebo** and **Assistant** — both optimized for Hebrew and loaded via Google Fonts on web.
+> **Note:** When testing on a physical phone via Expo Go, set `EXPO_PUBLIC_AI_API_URL` to your computer's LAN IP (e.g., `http://192.168.1.20:3000/api/chat`), not `localhost`.
 
 ---
 
-## Notes
+## Environment Variables
 
-- All AI responses are **hardcoded in `context/AppContext.tsx`** under `AI_RESPONSES`
-- Real AI can be enabled through `POST /api/chat` in `server/serve.js`. Put `OPENROUTER_API_KEY` or `GEMINI_API_KEY` in `.env` on the server, never inside the mobile app.
-- The Expo app reads `EXPO_PUBLIC_AI_API_URL`. For Expo Go on a physical phone, use your computer LAN IP, for example `http://192.168.1.20:3000/api/chat`.
-- History is stored in `AsyncStorage` under the key `@legal_advisor_history`
-- Auth state is stored under `@legal_advisor_user`
-- The app is **portrait-only** (configured in `app.json`)
-- Web build uses `dir="rtl"` on the HTML element for correct RTL layout
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `EXPO_PUBLIC_SUPABASE_URL` | Your Supabase project URL | For cloud sync |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anon key | For cloud sync |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server only) | For server admin ops |
+| `AI_PROVIDER` | `openrouter` or `gemini` | For AI answers |
+| `OPENROUTER_API_KEY` / `GEMINI_API_KEY` | Provider API key | For AI answers |
+| `EXPO_PUBLIC_AI_API_URL` | URL to the local AI server | Yes |
+| `JWT_SECRET` | JWT verification secret for Node server | Yes |
+| `EXPO_PUBLIC_ALLOW_DEMO` | Enables explicit demo-answer button (`true` for dev) | Dev only |
+
+> 🔒 **Never commit `.env` to version control.** It is already listed in `.gitignore`.
+> Treat `SUPABASE_SERVICE_ROLE_KEY` and API keys as secrets — they grant elevated access.
 
 ---
 
-## License
+## Database Migrations
 
-This project was created for academic/university purposes. Not intended for production use or real legal advice.
+All schema changes are managed through SQL migration files in `supabase/migrations/`:
+
+| File | Description |
+|------|-------------|
+| `001_init_auth.sql` | Supabase Auth triggers and base setup |
+| `002_profiles.sql` | Public user profiles table |
+| `003_legal_requests.sql` | Legal questions, answers, and category tracking |
+| `004_analytics.sql` | Event and usage analytics tables |
+| `006_admin.sql` | Admin role policies and protected views |
+
+Apply migrations via the Supabase CLI or Dashboard SQL Editor.
 
 ---
 
-*Built with ❤️ using Expo + React Native*
+## Security Notes
+
+- **API keys are server-side only.** The mobile app never holds OpenRouter or Gemini keys directly.
+- **Row Level Security (RLS)** is enabled on all Supabase tables. Users can only read and write their own data.
+- **Service Role Key** should only be used in server contexts (`server/serve.js`). Do not expose it in the client bundle.
+- **JWT tokens** are validated by both Supabase Auth and the local Node AI server.
+- **Portrait-only orientation** is enforced in `app.json` to maintain UI consistency.
+- **Zod validation** is used on all external inputs (AI responses, form data, deep links).
+
+---
+
+## Roadmap
+
+- [ ] Push notifications for legal updates
+- [ ] Offline-first AI with on-device model (small LLM)
+- [ ] Multi-language support (Arabic, English)
+- [ ] Lawyer marketplace integration
+- [ ] Document upload & contract analysis
+- [ ] End-to-end encryption for sensitive legal queries
+
+---
+
+## Screenshots
+
+> Screenshots will be added below to showcase the app experience.
+
+| Welcome & Onboarding | Home | Ask AI | History | Admin Dashboard |
+|----------------------|------|--------|---------|-----------------|
+| *placeholder* | *placeholder* | *placeholder* | *placeholder* | *placeholder* |
+
+---
+
+## Academic / Demo Disclaimer
+
+This project was developed for **academic and demonstration purposes** as part of a university program in software engineering. While it uses production-grade technologies and real AI providers, it operates in a **controlled, non-commercial capacity**.
+
+**FOLIO does not provide legally binding advice.** All responses generated by the AI are for educational and exploratory purposes only. Always consult a qualified, licensed attorney before making legal decisions.
+
+---
+
+<p align="center">
+  <sub>Built with precision — Expo · React Native · Supabase · OpenRouter</sub>
+</p>
