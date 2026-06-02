@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(node -e \"require.resolve\\('@react-navigation/bottom-tabs'\\)\")",
+      "Bash(node *)",
+      "Skill(ui-ux-pro-max)",
+      "Bash(python skills/ui-ux-pro-max/scripts/search.py \"legal tech AI advisor premium modern Hebrew RTL mobile\" --design-system -p \"FOLIO\" -f markdown)",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"legal tech AI advisor premium modern Hebrew RTL mobile\" --design-system -p \"FOLIO\" -f markdown)",
+      "Bash(Get-ChildItem \"C:\\\\Projects\\\\ai-legal-advisor-main\\\\.claude\\\\skills\\\\ui-ux-pro-max\" -Recurse -Name)",
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(npx expo *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":8081\")"
+    ]
+  }
+}

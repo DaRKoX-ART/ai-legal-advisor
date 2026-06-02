@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "AI Legal Advisor"
+version = "1.0.0"
+id = "artifacts/ai-legal-advisor"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 19252
+
+[services.development]
+run = "pnpm --filter @workspace/ai-legal-advisor run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ai-legal-advisor", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/ai-legal-advisor", "run", "serve" ]
+
+[services.env]
+PORT = "19252"
+BASE_PATH = "/"
