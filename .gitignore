@@ -40,10 +40,21 @@ Thumbs.db
 *.sublime-workspace
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
+
+# Secrets (defense in depth — never commit any flavour)
+.env.server
+.env.local
+.env.production
 
 # typescript
 *.tsbuildinfo
 .vercel
 
-.env
+# EAS / native artifacts
+.eas/
+*.aab
+*.apk
+*.ipa

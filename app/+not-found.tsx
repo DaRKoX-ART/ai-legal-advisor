@@ -22,7 +22,12 @@ export default function NotFoundScreen() {
           <Text style={styles.body_}>
             הקישור שגוי או שהדף הוסר. חזור אל המסך הראשי כדי להמשיך.
           </Text>
-          <Link href="/(tabs)/home" style={styles.link}>
+          <Link
+            href="/(tabs)/home"
+            style={styles.link}
+            accessibilityRole="link"
+            accessibilityLabel="חזרה לעמוד הבית"
+          >
             <Text style={styles.linkText}>חזרה לעמוד הבית →</Text>
           </Link>
         </View>

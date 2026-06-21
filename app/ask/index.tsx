@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Easing,
   KeyboardAvoidingView,
@@ -23,6 +24,7 @@ import { MAX_QUESTION_LENGTH, MIN_QUESTION_LENGTH } from "@/constants/legal";
 import { motion, palette, radius, spacing, typography } from "@/constants/theme";
 import { useIntake } from "@/context/IntakeContext";
 import { useHaptic, useReduceMotion } from "@/hooks";
+import { buildPiiWarningMessage, detectPii } from "@/services/piiGuard";
 
 const PLACEHOLDERS = [
   "המעסיק פיטר אותי ללא הודעה מוקדמת...",
@@ -138,13 +140,33 @@ export default function AskScreen() {
     router.back();
   }, []);
 
-  const handleSubmit = useCallback(() => {
-    if (!canAsk) return;
+  const performSubmit = useCallback(() => {
     haptic.impact(Haptics.ImpactFeedbackStyle.Medium);
     intake.setPrompt(trimmed);
     intake.beginSubmit();
     router.push("/ask/loading");
-  }, [canAsk, trimmed, intake, haptic]);
+  }, [trimmed, intake, haptic]);
+
+  const handleSubmit = useCallback(() => {
+    if (!canAsk) return;
+
+    // Soft PII gate: warn the user before transmitting any identifying
+    // details. The dialog never blocks — the user can always send.
+    const hits = detectPii(trimmed);
+    if (hits.length > 0) {
+      Alert.alert("פרטים אישיים בשאלה", buildPiiWarningMessage(hits), [
+        { text: "לערוך את השאלה", style: "cancel" },
+        {
+          text: "שלח בכל זאת",
+          style: "destructive",
+          onPress: performSubmit,
+        },
+      ]);
+      return;
+    }
+
+    performSubmit();
+  }, [canAsk, trimmed, performSubmit]);
 
   const handleSuggestion = useCallback(
     (suggestion: string) => {
@@ -299,6 +321,8 @@ export default function AskScreen() {
                     s.chip,
                     pressed && s.chipPressed,
                   ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`הוסף נושא ${suggestion} לשאלה`}
                 >
                   <Text style={s.chipText}>{suggestion}</Text>
                 </Pressable>

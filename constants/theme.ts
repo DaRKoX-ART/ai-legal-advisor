@@ -1,9 +1,12 @@
 // =============================================================================
 // FOLIO — Design System v4 (Slate)
 // -----------------------------------------------------------------------------
-// Clean modern legal-tech aesthetic.
-//   - LIGHT (Slate white) for all main screens
-//   - DARK  (Slate 950)   for the Ask loading screen only
+// FOLIO NOCTURNE — dark cinematic legal-tech aesthetic.
+//   - Obsidian canvas (#0A0908) base across every screen.
+//   - Champagne (#E8B86D) for accents, CTAs, and gold rules.
+//   - Glass-tinted surfaces with subtle aurora gradients.
+//   - Tokens below are the single source of truth; do not invent
+//     ad-hoc hex values in screens.
 // =============================================================================
 
 import { Platform } from "react-native";

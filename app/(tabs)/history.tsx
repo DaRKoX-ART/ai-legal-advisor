@@ -6,7 +6,6 @@ import {
   Alert,
   Animated,
   Easing,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -131,6 +130,7 @@ export default function SavedScreen() {
               onPress={onClearAll}
               style={({ pressed }) => [s.clearBtn, pressed && { opacity: 0.6 }]}
               accessibilityRole="button"
+              accessibilityLabel="מחק את כל התשובות השמורות"
             >
               <Feather name="trash-2" size={14} color={palette.inkDanger} />
               <Text style={s.clearText}>מחק את כל התשובות</Text>
@@ -200,6 +200,8 @@ const SavedRow = memo(function SavedRow({
       onPressIn={pressIn}
       onPressOut={pressOut}
       accessibilityRole="button"
+      accessibilityLabel={`${answer.title} — ${answer.category}, ${date}`}
+      accessibilityHint="הקש פעמיים לפתיחה, הקשה ארוכה כדי למחוק"
     >
       <Animated.View style={[s.row, { transform: [{ scale: pressScale }] }]}>
         {/* Right-edge gold rail (RTL leading edge) */}

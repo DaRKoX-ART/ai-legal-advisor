@@ -10,6 +10,13 @@ import type {
 // after a material change to the disclaimer text.
 export const DISCLAIMER_STORAGE_KEY = "@legal_advisor_disclaimer_accepted_v1";
 
+// Version of the disclaimer text shown to users on onboarding. Saved into
+// `UserProfile.disclaimerVersion` at sign-in. If the constant changes, the
+// app re-prompts onboarding so users explicitly accept the new wording.
+// Increment when the disclaimer copy changes materially (e.g. new hotline,
+// new data-use clause, scope change).
+export const DISCLAIMER_VERSION = "v1";
+
 // Question length bounds. Must match the server-side validation in
 // `server/serve.js` so client and server agree on what is acceptable.
 export const MIN_QUESTION_LENGTH = 8;

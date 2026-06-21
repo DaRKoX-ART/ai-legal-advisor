@@ -18,8 +18,11 @@ const STATIC_ROOT = path.resolve(__dirname, "..", "static-build");
 const TEMPLATE_PATH = path.resolve(__dirname, "templates", "landing-page.html");
 const basePath = (process.env.BASE_PATH || "/").replace(/\/+$/, "");
 
-function loadEnvFile() {
-  const envPath = path.resolve(__dirname, "..", ".env");
+// Load one .env-style file into process.env without overwriting any
+// values that are already set by the host environment. We load .env.server
+// LAST so server-only secrets override any accidental duplicates in .env.
+function loadEnvFile(filename) {
+  const envPath = path.resolve(__dirname, "..", filename);
   if (!fs.existsSync(envPath)) return;
 
   const lines = fs.readFileSync(envPath, "utf-8").split(/\r?\n/);
@@ -42,7 +45,8 @@ function loadEnvFile() {
   }
 }
 
-loadEnvFile();
+loadEnvFile(".env");
+loadEnvFile(".env.server");
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -72,6 +76,75 @@ const MIN_QUESTION_LENGTH = 8;
 const MAX_QUESTION_LENGTH = 2000;
 const UPSTREAM_TIMEOUT_MS = 22000;
 
+// Maximum size for `POST /api/chat` request bodies. 64 KB is comfortably
+// above any legitimate FOLIO payload (longest question 2 KB + JSON wrapper
+// + future fields) and well below anything that would hurt the event loop.
+const MAX_BODY_BYTES = parseInt(
+  process.env.AI_MAX_BODY_BYTES || "65536",
+  10,
+);
+
+// Simple in-memory sliding-window rate limiter. Per-IP. Resets when the
+// process restarts (intentional — for a single Node host this is fine; if
+// you scale horizontally, replace with Redis). Two knobs:
+//   AI_RATE_WINDOW_MS  — window length (default 60_000 = 1 minute)
+//   AI_RATE_MAX_PER_WINDOW — max requests per IP per window (default 30)
+const RATE_WINDOW_MS = parseInt(
+  process.env.AI_RATE_WINDOW_MS || "60000",
+  10,
+);
+const RATE_MAX = parseInt(
+  process.env.AI_RATE_MAX_PER_WINDOW || "30",
+  10,
+);
+const RATE_HITS = new Map(); // ip → number[] of recent epoch ms
+
+function isRateLimited(ip) {
+  if (!ip || RATE_MAX <= 0) return false;
+  const now = Date.now();
+  const cutoff = now - RATE_WINDOW_MS;
+  const hits = RATE_HITS.get(ip) || [];
+  // Drop expired hits.
+  let i = 0;
+  while (i < hits.length && hits[i] < cutoff) i++;
+  const fresh = i === 0 ? hits : hits.slice(i);
+  if (fresh.length >= RATE_MAX) {
+    RATE_HITS.set(ip, fresh);
+    return true;
+  }
+  fresh.push(now);
+  RATE_HITS.set(ip, fresh);
+  return false;
+}
+
+// Periodic cleanup so the map doesn't grow unbounded for one-time visitors.
+setInterval(() => {
+  const cutoff = Date.now() - RATE_WINDOW_MS;
+  for (const [ip, hits] of RATE_HITS.entries()) {
+    const fresh = hits.filter((t) => t >= cutoff);
+    if (fresh.length === 0) RATE_HITS.delete(ip);
+    else RATE_HITS.set(ip, fresh);
+  }
+}, Math.max(RATE_WINDOW_MS, 30_000)).unref();
+
+function clientIp(req) {
+  const fwd = req.headers["x-forwarded-for"];
+  if (typeof fwd === "string" && fwd.length > 0) {
+    return fwd.split(",")[0].trim();
+  }
+  return (req.socket && req.socket.remoteAddress) || "";
+}
+
+// Optional shared-secret check between the Expo client and this server.
+// If AI_PROXY_TOKEN is set, the client must send `X-FOLIO-Token: <value>`
+// (case-insensitive header). If unset, no token is required (dev default).
+const PROXY_TOKEN = process.env.AI_PROXY_TOKEN || "";
+function tokenOk(req) {
+  if (!PROXY_TOKEN) return true;
+  const got = req.headers["x-folio-token"];
+  return typeof got === "string" && got === PROXY_TOKEN;
+}
+
 // Canonical Hebrew category labels accepted from the client.
 // Used only when validating the AI's returned `category` field.
 const ALLOWED_CATEGORIES = new Set([
@@ -87,7 +160,7 @@ function sendJson(res, statusCode, body) {
     "content-type": "application/json; charset=utf-8",
     "access-control-allow-origin": "*",
     "access-control-allow-methods": "POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
+    "access-control-allow-headers": "content-type, x-folio-token",
   });
   res.end(JSON.stringify(body));
 }
@@ -106,7 +179,7 @@ function readJsonBody(req) {
     let body = "";
     req.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 12000) {
+      if (body.length > MAX_BODY_BYTES) {
         reject(new Error("Request body is too large"));
         req.destroy();
       }
@@ -621,7 +694,7 @@ async function handleChat(req, res) {
     res.writeHead(204, {
       "access-control-allow-origin": "*",
       "access-control-allow-methods": "POST, OPTIONS",
-      "access-control-allow-headers": "content-type",
+      "access-control-allow-headers": "content-type, x-folio-token",
     });
     res.end();
     return;
@@ -629,6 +702,25 @@ async function handleChat(req, res) {
 
   if (req.method !== "POST") {
     return sendError(res, 405, "INVALID_INPUT", "Method not allowed");
+  }
+
+  // Optional shared-secret enforcement. Returns generic INVALID_INPUT
+  // (not 401 with a hint) — we never want to leak that a token is even
+  // expected to unauthenticated probes.
+  if (!tokenOk(req)) {
+    return sendError(res, 403, "INVALID_INPUT", "Forbidden");
+  }
+
+  // Per-IP rate limit. Returns a 429 with a stable Retry-After hint.
+  const ip = clientIp(req);
+  if (isRateLimited(ip)) {
+    res.setHeader("Retry-After", Math.ceil(RATE_WINDOW_MS / 1000));
+    return sendError(
+      res,
+      429,
+      "RATE_LIMITED",
+      "Too many requests. Please wait a moment and try again.",
+    );
   }
 
   let body;

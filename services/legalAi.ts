@@ -6,6 +6,7 @@ import {
   detectLanguage,
   legalAidForAnswer,
 } from "@/constants/legal";
+import { reportError } from "@/services/crashReporter";
 import type {
   ActionItem,
   DeadlineHint,
@@ -75,6 +76,14 @@ function resolveApiUrl(): string {
 
 const RESOLVED_API_URL = resolveApiUrl();
 
+// Optional shared secret enforced by the back-end. When set, every
+// `/api/chat` request is sent with `X-FOLIO-Token: <value>`. Bundled at
+// build time like all EXPO_PUBLIC_* env vars.
+const PROXY_TOKEN =
+  typeof process.env.EXPO_PUBLIC_AI_PROXY_TOKEN === "string"
+    ? process.env.EXPO_PUBLIC_AI_PROXY_TOKEN
+    : "";
+
 /**
  * Dev-only logger. No-op in production builds.
  * Never logs API keys or user prompt contents; only metadata.
@@ -97,6 +106,7 @@ const KNOWN_CODES: ReadonlyArray<LegalAiErrorCode> = [
   "UPSTREAM_TIMEOUT",
   "INVALID_AI_RESPONSE",
   "NETWORK_ERROR",
+  "RATE_LIMITED",
 ];
 
 const ALLOWED_CATEGORIES: LegalCategoryKey[] = [
@@ -239,6 +249,14 @@ export type AskLegalResult =
 export async function askLegal(question: string): Promise<AskLegalResult> {
   if (!RESOLVED_API_URL) {
     devLog("aborting: no API URL resolved");
+    // This is a critical misconfiguration: a production build shipped
+    // without `EXPO_PUBLIC_AI_API_URL`. Surface it once per session so
+    // it shows up in the dashboard instead of silently failing.
+    reportError(
+      new Error("EXPO_PUBLIC_AI_API_URL not configured"),
+      "ask",
+      { reason: "missing_api_url" },
+    );
     return {
       ok: false,
       error: makeError(
@@ -257,11 +275,18 @@ export async function askLegal(question: string): Promise<AskLegalResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (PROXY_TOKEN) {
+    headers["X-FOLIO-Token"] = PROXY_TOKEN;
+  }
+
   let response: Response;
   try {
     response = await fetch(RESOLVED_API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ question, language }),
       signal: controller.signal,
     });
@@ -317,6 +342,20 @@ export async function askLegal(question: string): Promise<AskLegalResult> {
       typeof json?.message === "string" && json.message.length > 0
         ? json.message
         : "AI service unavailable";
+
+    // Report only operational failures that need attention, not the
+    // transient/expected ones (network, rate-limit, input validation).
+    if (
+      code === "MISSING_API_KEY" ||
+      code === "INVALID_AI_RESPONSE" ||
+      (code === "AI_UNAVAILABLE" && response.status >= 500)
+    ) {
+      reportError(new Error(`${code}: ${message}`), "ask", {
+        status: response.status,
+        code,
+      });
+    }
+
     return { ok: false, error: makeError(code, message) };
   }
 

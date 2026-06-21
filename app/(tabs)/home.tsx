@@ -131,6 +131,7 @@ export default function HomeScreen() {
                     onPress={() => router.push("/(tabs)/history")}
                     style={s.seeAllBtn}
                     accessibilityRole="button"
+                    accessibilityLabel="ראה את כל התשובות השמורות"
                   >
                     <Feather
                       name="chevron-left"
@@ -183,6 +184,7 @@ const RecentCardItem = memo(function RecentCardItem({
         total={totalItems}
         progress={progress}
         onPress={handlePress}
+        accessibilityLabel={`${answer.title} — ${answer.category}`}
       />
     </Reveal>
   );
@@ -198,6 +200,7 @@ const RecentCard = memo(function RecentCard({
   total,
   progress,
   onPress,
+  accessibilityLabel,
 }: {
   title: string;
   brief: string;
@@ -208,6 +211,7 @@ const RecentCard = memo(function RecentCard({
   total: number;
   progress: number;
   onPress: () => void;
+  accessibilityLabel?: string;
 }) {
   const pressScale = useRef(new Animated.Value(1)).current;
   const pressIn = () =>
@@ -229,7 +233,14 @@ const RecentCard = memo(function RecentCard({
   });
 
   return (
-    <Pressable onPress={onPress} onPressIn={pressIn} onPressOut={pressOut}>
+    <Pressable
+      onPress={onPress}
+      onPressIn={pressIn}
+      onPressOut={pressOut}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint="פותח את התשובה השמורה"
+    >
       <Animated.View style={[s.recentCard, { transform: [{ scale: pressScale }] }]}>
         {/* Right-edge gold rail (RTL accent) */}
         <View style={s.recentRail} />

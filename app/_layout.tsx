@@ -11,7 +11,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { I18nManager, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -21,6 +21,21 @@ import { palette } from "@/constants/theme";
 import { AuthProvider } from "@/context/AuthContext";
 import { AppProvider } from "@/context/AppContext";
 import { IntakeProvider } from "@/context/IntakeContext";
+import { reportError } from "@/services/crashReporter";
+
+// Allow the React Native runtime to recognize the device locale as RTL
+// when applicable. We do NOT call `forceRTL(true)` — the UI is already
+// hand-tuned with `flexDirection: "row-reverse"` and `textAlign: "right"`,
+// so forcing RTL would double-flip those layouts. Calling `allowRTL` only
+// removes the runtime warning on RTL devices and improves native component
+// behavior (Alerts, swipe gestures) without changing our layouts.
+if (Platform.OS !== "web" && !I18nManager.isRTL) {
+  try {
+    I18nManager.allowRTL(true);
+  } catch {
+    // older RN versions ignore this; non-fatal.
+  }
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -84,7 +99,11 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ErrorBoundary>
+      <ErrorBoundary
+        onError={(error, stackTrace) =>
+          reportError(error, "render", { component_stack: stackTrace })
+        }
+      >
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <AppProvider>
@@ -92,7 +111,11 @@ export default function RootLayout() {
               <GestureHandlerRootView style={styles.root}>
                 <KeyboardProvider>
                   <View style={styles.root}>
-                    <StatusBar style="light" />
+                    <StatusBar
+                      style="light"
+                      backgroundColor={palette.ink}
+                      translucent={false}
+                    />
                     <RootStack />
                   </View>
                 </KeyboardProvider>

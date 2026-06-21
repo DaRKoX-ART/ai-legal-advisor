@@ -12,7 +12,11 @@ import React, {
 import { legalAidForAnswer } from "@/constants/legal";
 import { useAuth } from "@/context/AuthContext";
 import { useSync } from "@/hooks/useSync";
-import { insertEvent, queueEvent } from "@/services/supabase/analytics";
+import {
+  insertEvent,
+  queueEvent,
+  setAnalyticsConsent,
+} from "@/services/supabase/analytics";
 import type {
   ActionItem,
   EvidenceItem,
@@ -86,7 +90,16 @@ export interface UserProfile {
   disclaimerVersion: string;
 }
 export interface AppSettings {
+  /**
+   * When true, the AI error card exposes an explicit "show demo answer"
+   * button. The demo is always clearly labeled as demo (never silent).
+   */
   demoEnabled: boolean;
+  /**
+   * When false, no analytics events leave the device. Defaults to true.
+   * Toggling this is the only way a non-developer can disable telemetry.
+   */
+  analyticsEnabled: boolean;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -318,7 +331,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [localUser, setLocalUser] = useState<UserProfile | null>(null);
   const [answers, setAnswers] = useState<SavedAnswer[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ demoEnabled: false });
+  const [settings, setSettings] = useState<AppSettings>({
+    demoEnabled: false,
+    analyticsEnabled: true,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -403,13 +419,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAnswers(initialAnswers);
 
       // ── Settings ───────────────────────────────────────────────
+      // `analyticsEnabled` defaults to true for users who installed
+      // before this field existed — matches the prior implicit behavior.
       if (rawSettings) {
         try {
           const parsed = JSON.parse(rawSettings);
           if (parsed && typeof parsed === "object") {
-            setSettings({ demoEnabled: !!parsed.demoEnabled });
+            const loaded: AppSettings = {
+              demoEnabled: !!parsed.demoEnabled,
+              analyticsEnabled:
+                typeof parsed.analyticsEnabled === "boolean"
+                  ? parsed.analyticsEnabled
+                  : true,
+            };
+            setSettings(loaded);
+            setAnalyticsConsent(loaded.analyticsEnabled);
           }
         } catch {}
+      } else {
+        // First launch — push the default (true) into the analytics module.
+        setAnalyticsConsent(true);
       }
 
       setReady(true);
@@ -485,6 +514,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (patch: Partial<AppSettings>) => {
       const next: AppSettings = { ...settings, ...patch };
       setSettings(next);
+      // Keep the analytics module's in-memory consent cache in sync so
+      // toggling the switch in About takes effect immediately for the
+      // next event without needing an app restart.
+      if (typeof patch.analyticsEnabled === "boolean") {
+        setAnalyticsConsent(patch.analyticsEnabled);
+      }
       await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
     },
     [settings],

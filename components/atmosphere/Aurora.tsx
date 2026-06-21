@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Easing, StyleSheet, ViewStyle } from "react-native";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
@@ -79,9 +80,19 @@ export function Aurora({
   gradients = DEFAULT_GRADIENTS,
 }: Props) {
   const breath = useRef(new Animated.Value(0)).current;
+  // Track screen-level focus via `useFocusEffect`. When the user
+  // switches tabs or opens a modal, the aurora breath loop stops so
+  // it doesn't waste CPU/battery on a backgrounded screen.
+  const [isFocused, setIsFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, []),
+  );
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion || !isFocused) {
       breath.setValue(0.5);
       return;
     }
@@ -103,7 +114,7 @@ export function Aurora({
     );
     loop.start();
     return () => loop.stop();
-  }, [breath, reduceMotion]);
+  }, [breath, reduceMotion, isFocused]);
 
   const opacity = breath.interpolate({
     inputRange: [0, 1],

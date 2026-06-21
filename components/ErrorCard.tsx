@@ -29,6 +29,10 @@ const MESSAGES_HE: Record<LegalAiErrorCode, { title: string; body: string }> = {
     title: "אין חיבור לשרת",
     body: "לא ניתן להגיע לשרת. בדוק את החיבור לאינטרנט ונסה שוב.",
   },
+  RATE_LIMITED: {
+    title: "יותר מדי בקשות",
+    body: "שלחת הרבה שאלות בזמן קצר. המתן רגע אחד ונסה שוב.",
+  },
 };
 
 type Props = {

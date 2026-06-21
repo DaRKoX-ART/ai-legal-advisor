@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Aurora, DotGrid, GoldHairline } from "@/components/atmosphere";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Reveal } from "@/components/Reveal";
-import { DISCLAIMER_STORAGE_KEY } from "@/constants/legal";
+import { DISCLAIMER_STORAGE_KEY, DISCLAIMER_VERSION } from "@/constants/legal";
 import { motion, palette, radius, spacing, typography } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import { useHaptic, useReduceMotion } from "@/hooks";
@@ -69,7 +69,7 @@ export default function Onboarding() {
     if (!canStart) return;
     setBusy(true);
     try {
-      await signIn(name.trim(), { disclaimerVersion: "v1" });
+      await signIn(name.trim(), { disclaimerVersion: DISCLAIMER_VERSION });
       await AsyncStorage.setItem(DISCLAIMER_STORAGE_KEY, "true");
       hapticNotification(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)/home");

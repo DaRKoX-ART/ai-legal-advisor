@@ -144,7 +144,7 @@ export default function AboutScreen() {
               </View>
             </View>
             <View style={s.profileText}>
-              <Text style={s.profileEyebrow}>FOLIO · ACCOUNT</Text>
+              <Text style={s.profileEyebrow}>FOLIO · חשבון</Text>
               <Text style={s.profileName}>{user?.name ?? "אורח"}</Text>
               <Text style={s.profileMeta}>
                 {user?.signedAt
@@ -242,6 +242,13 @@ export default function AboutScreen() {
               description="הצג כפתור 'תשובת דמו' אם ה-AI נכשל."
               value={settings.demoEnabled}
               onValueChange={(v) => updateSettings({ demoEnabled: v })}
+            />
+            <SettingRow
+              label="שיפור האפליקציה"
+              description="שליחת נתוני שימוש אנונימיים (ללא תוכן שאלות)."
+              value={settings.analyticsEnabled}
+              onValueChange={(v) => updateSettings({ analyticsEnabled: v })}
+              isLast
             />
           </View>
         </Reveal>
@@ -455,14 +462,16 @@ function SettingRow({
   description,
   value,
   onValueChange,
+  isLast,
 }: {
   label: string;
   description: string;
   value: boolean;
   onValueChange: (v: boolean) => void;
+  isLast?: boolean;
 }) {
   return (
-    <View style={[s.settingRow, s.lastRow]}>
+    <View style={[s.settingRow, isLast && s.lastRow]}>
       <View style={s.settingText}>
         <Text style={s.settingLabel}>{label}</Text>
         <Text style={s.settingDesc}>{description}</Text>
@@ -476,6 +485,10 @@ function SettingRow({
         }}
         thumbColor={value ? palette.champagneText : palette.bone}
         ios_backgroundColor={palette.glassBorder}
+        accessibilityLabel={label}
+        accessibilityHint={description}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value }}
       />
     </View>
   );

@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, View, ViewStyle } from "react-native";
 
 import { CircularSeal } from "@/components/CircularSeal";
+import { DISCLAIMER_VERSION } from "@/constants/legal";
 import { palette, spacing, typography } from "@/constants/theme";
 import { isSupabaseConfigured } from "@/services/supabase/auth";
 import { supabase } from "@/services/supabase/client";
@@ -80,10 +81,31 @@ export default function SplashScreen() {
         ]);
         const hasLocalUser = !!(v1 || legacy);
 
+        // If the disclaimer text has changed since the user last accepted,
+        // route back through onboarding so consent is explicit. We only
+        // re-prompt local users — Supabase-authenticated profiles get
+        // their version refreshed at next sign-in.
+        let needsDisclaimerReaccept = false;
+        if (hasLocalUser && v1) {
+          try {
+            const profile = JSON.parse(v1) as { disclaimerVersion?: string };
+            needsDisclaimerReaccept =
+              profile.disclaimerVersion !== DISCLAIMER_VERSION;
+          } catch {
+            needsDisclaimerReaccept = true;
+          }
+        }
+
         if (!mounted.current) return;
 
-        if (hasSupabaseSession || hasLocalUser) {
+        if (hasSupabaseSession) {
           router.replace("/(tabs)/home");
+        } else if (hasLocalUser) {
+          if (needsDisclaimerReaccept) {
+            router.replace("/onboarding");
+          } else {
+            router.replace("/(tabs)/home");
+          }
         } else {
           router.replace("/(auth)/welcome");
         }

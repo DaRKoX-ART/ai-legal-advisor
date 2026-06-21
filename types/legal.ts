@@ -16,7 +16,8 @@ export type LegalAiErrorCode =
   | "MISSING_API_KEY"
   | "UPSTREAM_TIMEOUT"
   | "INVALID_AI_RESPONSE"
-  | "NETWORK_ERROR";
+  | "NETWORK_ERROR"
+  | "RATE_LIMITED";
 
 export interface LegalAiErrorPayload {
   error: true;

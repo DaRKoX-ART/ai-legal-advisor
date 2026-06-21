@@ -166,12 +166,22 @@ export default function SavedAnswerScreen() {
 
       {menuOpen ? (
         <View style={[s.menu, { top: insets.top + 64 }]}>
-          <Pressable style={s.menuItem} onPress={onSharePack}>
+          <Pressable
+            style={s.menuItem}
+            onPress={onSharePack}
+            accessibilityRole="button"
+            accessibilityLabel="שתף את התיק עם עורך דין"
+          >
             <Feather name="share" size={16} color={palette.text} />
             <Text style={s.menuLabel}>שתף את התיק</Text>
           </Pressable>
           <View style={s.menuDivider} />
-          <Pressable style={s.menuItem} onPress={onDelete}>
+          <Pressable
+            style={s.menuItem}
+            onPress={onDelete}
+            accessibilityRole="button"
+            accessibilityLabel="מחק את התיק לצמיתות"
+          >
             <Feather name="trash-2" size={16} color={palette.danger} />
             <Text style={[s.menuLabel, { color: palette.danger }]}>מחק</Text>
           </Pressable>

@@ -11,6 +11,29 @@ export type AnalyticsEvent = {
   client_timestamp: string;
 };
 
+// ─── Consent gate ────────────────────────────────────────────────────
+// Module-level boolean kept in sync with the user's About → Settings
+// toggle by `AppContext`. Defaults to `true` so analytics work for users
+// who never visit Settings; the user can opt out at any time.
+//
+// Notes:
+//   - The toggle is the source of truth; this variable is just a cache
+//     to avoid hitting AsyncStorage on every analytics call.
+//   - When consent is OFF, `insertEvent`, `queueEvent`, and `flushQueue`
+//     all become silent no-ops. The on-disk queue is preserved (so
+//     re-enabling consent later can flush previously queued events).
+let analyticsConsent = true;
+
+/** Called once at app start and on every settings change by AppContext. */
+export function setAnalyticsConsent(enabled: boolean): void {
+  analyticsConsent = !!enabled;
+}
+
+/** Read the current consent value. Used by `crashReporter`. */
+export function isAnalyticsAllowed(): boolean {
+  return analyticsConsent;
+}
+
 /**
  * Insert a single analytics event to Supabase.
  * Returns true on success, false on failure.
@@ -19,6 +42,7 @@ export async function insertEvent(
   event: AnalyticsEvent,
   userId: string | null,
 ): Promise<boolean> {
+  if (!analyticsConsent) return false;
   if (!supabase) return false;
   const { error } = await supabase.from("request_events").insert({
     user_id: userId,
@@ -62,6 +86,7 @@ export async function saveQueue(queue: AnalyticsEvent[]): Promise<void> {
  * Append an event to the offline queue.
  */
 export async function queueEvent(event: AnalyticsEvent): Promise<void> {
+  if (!analyticsConsent) return;
   const queue = await loadQueue();
   queue.push(event);
   await saveQueue(queue);
@@ -72,6 +97,7 @@ export async function queueEvent(event: AnalyticsEvent): Promise<void> {
  * Returns the number of successfully sent events.
  */
 export async function flushQueue(userId: string | null): Promise<number> {
+  if (!analyticsConsent) return 0;
   if (!supabase) return 0;
   const queue = await loadQueue();
   if (queue.length === 0) return 0;

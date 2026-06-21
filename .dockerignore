@@ -1,0 +1,55 @@
+# Keep the Docker build context small. Only `server/` and `app.json` are
+# COPY'd in the Dockerfile, but excluding everything else here also keeps the
+# upload to Railway fast and prevents accidental secret leakage from .env*.
+
+node_modules
+.expo
+.expo-shared
+.metro-cache
+static-build
+.tmp-export
+.tmp-export-log.txt
+android
+ios
+build
+dist
+.next
+.output
+.vercel
+.eas
+*.aab
+*.apk
+*.ipa
+*.keystore
+*.jks
+.git
+.gitignore
+.github
+.cursor
+.vscode
+.idea
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Never bake secrets into the image. Railway injects env vars at runtime.
+.env
+.env.*
+!.env.example
+
+# Tooling / docs that the runtime does not need.
+README.md
+RELEASE.md
+legal
+scripts
+.claude
+hooks
+context
+components
+constants
+services
+types
+app
+assets

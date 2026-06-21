@@ -1,0 +1,18 @@
+# =============================================================================
+# Railway deployment config — FOLIO backend (server/serve.js)
+# =============================================================================
+# Pins the build to the Dockerfile (so Railway does NOT try to Nixpacks-detect
+# the root package.json as a Node app and pnpm-install the 500 MB of Expo
+# devDependencies that the server does not need).
+#
+# The deploy block restarts on crashes and keeps trying — the server has no
+# persistent state, so a clean restart is always safe.
+# =============================================================================
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

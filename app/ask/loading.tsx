@@ -28,7 +28,13 @@ const MIN_LOADING_MS = 900;
 export default function LoadingScreen() {
   const intake = useIntake();
   const insets = useSafeAreaInsets();
-  const { saveAnswer } = useApp();
+  const { saveAnswer, settings } = useApp();
+
+  // The error-card demo button shows when EITHER the build-time
+  // EXPO_PUBLIC_ALLOW_DEMO flag is set OR the user toggled "demo on
+  // failure" in Settings. The build flag is a hard override for
+  // staging/QA; the settings toggle is the user-facing control.
+  const demoAvailable = DEMO_ENABLED || settings.demoEnabled;
 
   const startedRef = useRef(false);
   const startedAtRef = useRef<number | null>(null);
@@ -199,8 +205,8 @@ export default function LoadingScreen() {
           <ErrorCard
             code={intake.errorCode}
             onRetry={handleRetry}
-            demoEnabled={DEMO_ENABLED}
-            onShowDemo={DEMO_ENABLED ? handleDemo : undefined}
+            demoEnabled={demoAvailable}
+            onShowDemo={demoAvailable ? handleDemo : undefined}
             variant="ink"
           />
         </ScrollView>
@@ -290,10 +296,14 @@ function LoadingState({
   return (
     <View style={[s.root, { paddingTop: topPad, paddingBottom: bottomPad }]}>
       {/* Top strip */}
-      <View style={s.topStrip}>
+      <View
+        style={s.topStrip}
+        accessibilityLiveRegion="polite"
+        accessibilityLabel="מנתח את השאלה המשפטית"
+      >
         <View style={s.topStripChip}>
           <View style={s.topStripDot} />
-          <Text style={s.topStripText}>FOLIO · ANALYSIS</Text>
+          <Text style={s.topStripText}>FOLIO · ניתוח</Text>
         </View>
         <Pressable
           onPress={onClose}
